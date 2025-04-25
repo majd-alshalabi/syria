@@ -3,7 +3,7 @@ import TestComponent from "./components/test-component";
 export default function LoginPage() {
     return (
         <div>
-            <TestComponent />
+            <TestComponent props = "test" />
             hiii
         </div>
     );
