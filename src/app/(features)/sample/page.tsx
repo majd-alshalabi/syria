@@ -1,4 +1,4 @@
-import TestComponent from '../components/test-component';
+import TestComponent from "./components/test-component";
 
 export default function LoginPage() {
     return (
