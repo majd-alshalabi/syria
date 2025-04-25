@@ -1,0 +1,264 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum ROLE {
+  USER
+  ADMIN
+}
+
+enum DIFFICULTTYPE {
+  easy
+  difficult
+  Medium
+}
+
+enum NAMEPLAN {
+  labs
+  classes
+  studentsInClass
+  labsInClass
+  challenge
+}
+
+enum PLANTYPE {
+  free
+  plus
+  custom
+  premium
+}
+
+enum TAGTYPE {
+  challenge
+  normal
+  class
+}
+
+model User {
+  id                     String                   @id @default(cuid())
+  email                  String                   @unique
+  username               String                   @unique
+  password               String
+  role                   ROLE
+  createdAt              DateTime                 @default(now())
+  typeUser               String?
+  userImage              String?
+  planEndDate            DateTime?
+  inActive               Boolean                  @default(false)
+  verifiedAt             DateTime?
+  Feedback               Feedback?
+  EditorConfig           EditorConfig?
+  ChallengeParticipation ChallengeParticipation[]
+  UserProject            UserProject[]
+  Star                   Star[]
+  Comment                Comment[]
+  Blog                   Blog[]
+  MemberClass            MemberClass[]
+  Verified               Verified?
+  PlanSubscription       PlanSubscription?
+}
+
+model Verified {
+  id     String  @id @default(cuid())
+  email  String  @unique
+  otp    Int
+  user   User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String? @unique
+}
+
+model Feedback {
+  id       String  @id @default(cuid())
+  Feedback String?
+  userId   String  @unique
+  user     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model EditorConfig {
+  id     String  @id @default(cuid())
+  config String?
+  userId String  @unique
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Plan {
+  id               String             @id @default(cuid())
+  name             String
+  price            Int
+  duration         DateTime?
+  FeaturePlan      FeaturePlan[]
+  PlanSubscription PlanSubscription[]
+}
+
+model FeaturePlan {
+  id     Int      @id @default(autoincrement())
+  name   NAMEPLAN
+  value  Int
+  plan   Plan     @relation(fields: [planId], references: [id], onDelete: Cascade)
+  planId String
+}
+
+model ClassProject {
+  id             String           @id @default(cuid())
+  name           String
+  type           String
+  descraption    String
+  Lab            Lab[]
+  createdAt      DateTime         @default(now())
+  classRomId     String
+  classRom       ClassRom         @relation(fields: [classRomId], references: [id], onDelete: Cascade)
+  FeedbackProjct FeedbackProjct[]
+  TagMorph       TagMorph[]
+}
+
+model PlanSubscription {
+  id String @id @default(cuid())
+
+  userId String @unique
+  planId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan   Plan   @relation(fields: [planId], references: [id], onDelete: Cascade)
+}
+
+model ClassRom {
+  id           String         @id @default(cuid())
+  ClassProject ClassProject[]
+  MemberClass  MemberClass[]
+}
+
+model Tag {
+  id       String     @id @default(cuid())
+  tagename String     @unique
+  tagtype  TAGTYPE?
+  TagMorph TagMorph[]
+}
+
+model TagMorph {
+  id            String        @id @default(cuid())
+  tagId         String
+  tag           Tag           @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  userprojectId String?
+  userproject   UserProject?  @relation(fields: [userprojectId], references: [id], onDelete: Cascade)
+  challengeId   String?
+  challenge     Challenge?    @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  classId       String?
+  class         ClassProject? @relation(fields: [classId], references: [id], onDelete: Cascade)
+  blogId        String?
+  blog          Blog?         @relation(fields: [blogId], references: [id], onDelete: Cascade)
+}
+
+model Challenge {
+  id                     String                   @id @default(cuid())
+  name                   String
+  isComplete             Boolean
+  difficulty             DIFFICULTTYPE
+  description            String?
+  resources              String?
+  endAt                  DateTime?
+  startedAt              DateTime?
+  createdAt              DateTime                 @default(now())
+  ChallengeParticipation ChallengeParticipation[]
+  TagMorph               TagMorph[]
+}
+
+model ChallengeParticipation {
+  id          String    @id @default(cuid())
+  challenge   Challenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  challengeId String
+  userId      String
+  Lab         Lab[]
+}
+
+model Lab {
+  id                       String                  @id @default(cuid())
+  tamblateId               String? // Nullable tamblateId
+  tamblate                 Tamblate?               @relation(fields: [tamblateId], references: [id], onDelete: SetNull) // onDelete: SetNull
+  jsonFile                 String
+  userprojectId            String?
+  classProjectId           String?
+  challengeParticipationId String?
+  challengeParticipation   ChallengeParticipation? @relation(fields: [challengeParticipationId], references: [id], onDelete: Cascade)
+  classProject             ClassProject?           @relation(fields: [classProjectId], references: [id], onDelete: Cascade)
+  userproject              UserProject?            @relation(fields: [userprojectId], references: [id], onDelete: Cascade)
+}
+
+model Tamblate {
+  id            String @id @default(cuid())
+  nameTemplate  String
+  imageTemplate String
+  Lab           Lab[]
+}
+
+model UserProject {
+  id          String     @id @default(cuid())
+  userId      String
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name        String?
+  description String?
+  Star        Star[]
+  Comment     Comment[]
+  Lab         Lab[]
+  TagMorph    TagMorph[]
+}
+
+model Blog {
+  id       String     @id @default(cuid())
+  userId   String
+  user     User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  contant  String?
+  imageUrl String?
+  status   Boolean    @default(false)
+  title    String?
+  Star     Star[]
+  Comment  Comment[]
+  TagMorph TagMorph[]
+}
+
+model Star {
+  id            String      @id @default(cuid())
+  userId        String
+  userprojectId String
+  blogId        String
+  blog          Blog        @relation(fields: [blogId], references: [id], onDelete: Cascade)
+  userproject   UserProject @relation(fields: [userprojectId], references: [id], onDelete: Cascade)
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Comment {
+  id            String      @id @default(cuid())
+  comment       String
+  userId        String
+  userprojectId String
+  blogId        String
+  blog          Blog        @relation(fields: [blogId], references: [id], onDelete: Cascade)
+  userproject   UserProject @relation(fields: [userprojectId], references: [id], onDelete: Cascade)
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model MemberClass {
+  id             String           @id @default(cuid())
+  classRomId     String
+  classRom       ClassRom         @relation(fields: [classRomId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  FeedbackProjct FeedbackProjct[]
+}
+
+model FeedbackProjct {
+  id             String       @id @default(cuid())
+  classProjectId String
+  classProject   ClassProject @relation(fields: [classProjectId], references: [id], onDelete: Cascade)
+  memberClassId  String
+  memberClass    MemberClass  @relation(fields: [memberClassId], references: [id], onDelete: Cascade)
+}
